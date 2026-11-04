@@ -56,11 +56,9 @@ export default class BrightnessControl extends Extension {
             const value = this._control.slider.value;
             for (const monitor of this._monitors) this._set(monitor, value);
         });
-        this._control.slider.connect('scroll-event', (_slider, event) => {
-            if (this._refreshing) return Clutter.EVENT_STOP;
-            const delta = this._scrollDelta(event);
+        this._onSliderScroll(this._control.slider, (delta) => {
+            if (this._refreshing) return;
             for (const monitor of this._monitors) this._set(monitor, monitor.value + delta);
-            return Clutter.EVENT_STOP;
         });
     }
 
@@ -97,6 +95,31 @@ export default class BrightnessControl extends Extension {
                     : Main.brightnessManager[method].bind(Main.brightnessManager),
             );
         }
+    }
+
+    /**
+     * Calls `callback(delta)` with the configured step for wheel/touchpad scrolls over `slider`.
+     *
+     * GNOME 51's Slider handles scrolling with its own Clutter.ScrollController actions, which run before
+     * the deprecated `scroll-event` signal, so a capture-phase controller is needed to keep the configured
+     * step. GNOME 50 Shells without Clutter.ScrollController fall back to the signal.
+     */
+    _onSliderScroll(slider, callback) {
+        if (Clutter.ScrollController) {
+            const controller = new Clutter.ScrollController({
+                flags: Clutter.ScrollControllerFlags.SCROLL_VERTICAL | Clutter.ScrollControllerFlags.SCROLL_HORIZONTAL,
+            });
+            controller.connect('scroll', (_controller, _sprite, _source, dx, dy) => {
+                const steps = Math.abs(dy) >= Math.abs(dx) ? -dy : dx;
+                callback((steps * this._settings.get_int('step')) / 100);
+            });
+            slider.add_action_full('brightness-scroll', Clutter.EventPhase.CAPTURE, controller);
+            return;
+        }
+        slider.connect('scroll-event', (_slider, event) => {
+            callback(this._scrollDelta(event));
+            return Clutter.EVENT_STOP;
+        });
     }
 
     _scrollDelta(event) {
@@ -185,10 +208,7 @@ export default class BrightnessControl extends Extension {
         item.add_child(monitor.slider);
         this._control.menu.addMenuItem(item);
         monitor.slider.accessible_name = `${monitor.name} brightness`;
-        monitor.slider.connect('scroll-event', (_slider, event) => {
-            this._set(monitor, monitor.value + this._scrollDelta(event));
-            return Clutter.EVENT_STOP;
-        });
+        this._onSliderScroll(monitor.slider, (delta) => this._set(monitor, monitor.value + delta));
         monitor.slider.connect('notify::value', () => {
             if (!monitor.syncing) this._set(monitor, monitor.slider.value);
         });

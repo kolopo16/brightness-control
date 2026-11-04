@@ -2,7 +2,7 @@
   "uuid": "brightness-control@extensions.local",
   "name": "Monitor Brightness",
   "description": "External monitor brightness sliders, Quick Settings slider below volume and configurable keyboard shortcuts using DDC/CI.",
-  "shell-version": ["50"],
+  "shell-version": ["50", "51"],
   "settings-schema": "org.gnome.shell.extensions.brightness-control",
-  "version": 2
+  "version": 3
 }
