@@ -8,7 +8,7 @@ Control external monitor brightness from GNOME Quick Settings and your keyboard.
 - Support for brightness keys and custom shortcuts.
 - GNOME brightness popup when using the keyboard.
 
-Requires **GNOME Shell 50**, `ddcutil`, and a monitor with DDC/CI enabled. Some monitors and docks do not support DDC/CI. This extension changes hardware brightness; it does not apply software dimming.
+Requires **GNOME Shell 50 or 51**, `ddcutil`, and a monitor with DDC/CI enabled. Some monitors and docks do not support DDC/CI. This extension changes hardware brightness; it does not apply software dimming.
 
 ## Installation
 
